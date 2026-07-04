@@ -12,6 +12,8 @@ import {
 } from 'lucide-react'
 
 import AuthModal from './components/AuthModal.jsx'
+import UserProfileModal from './components/UserProfileModal.jsx'
+import AiChatBox from './components/AiChatBox.jsx'
 
 const navItems = [
   { label: 'Trang chủ', href: '#top' },
@@ -93,7 +95,7 @@ const stats = [
   { num: '40+', label: 'điểm đổi pin' }
 ]
 
-function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout }) {
+function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout, onOpenProfile }) {
   return (
     <header
       className="sticky top-0 z-40 w-full border-b backdrop-blur-md"
@@ -109,7 +111,7 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout }) {
 
         <nav aria-label="Điều hướng chính" className="hidden items-center gap-7 lg:flex">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} className="text-sm hover:opacity-70">
+            <a key={item.href} href={item.href} className="whitespace-nowrap text-sm hover:opacity-70">
               {item.label}
             </a>
           ))}
@@ -127,7 +129,7 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout }) {
           </button>
           {currentUser ? (
             <div className="hidden items-center gap-3 sm:flex">
-              <span className="text-sm font-semibold">
+              <span className="whitespace-nowrap text-sm font-semibold">
                 Xin chào,{' '}
                 <span className="accent-grad">
                   {currentUser.fullName || currentUser.name || currentUser.email}
@@ -136,8 +138,17 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout }) {
 
               <button
                 type="button"
+                onClick={onOpenProfile}
+                className="whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-semibold"
+                style={{ borderColor: 'var(--border)' }}
+              >
+                Trang cá nhân
+              </button>
+
+              <button
+                type="button"
                 onClick={onLogout}
-                className="rounded-xl border px-4 py-2 text-sm font-semibold"
+                className="whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-semibold"
                 style={{ borderColor: 'var(--border)' }}
               >
                 Đăng xuất
@@ -148,7 +159,7 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout }) {
               <button
                 type="button"
                 onClick={() => onOpenAuth('login')}
-                className="hidden rounded-xl border px-4 py-2 text-sm font-semibold sm:inline-flex"
+                className="hidden whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-semibold sm:inline-flex"
                 style={{ borderColor: 'var(--border)' }}
               >
                 Đăng nhập
@@ -157,7 +168,7 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout }) {
               <button
                 type="button"
                 onClick={() => onOpenAuth('register')}
-                className="cta-shine hidden rounded-xl px-4 py-2 text-sm font-semibold gradient-btn sm:inline-flex"
+                className="cta-shine hidden whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold gradient-btn sm:inline-flex"
               >
                 Đăng ký
               </button>
@@ -166,7 +177,7 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout }) {
 
           <a
             href="#pricing"
-            className="cta-shine hidden items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold gradient-btn lg:inline-flex"
+            className="cta-shine hidden items-center gap-2 whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-semibold gradient-btn lg:inline-flex"
           >
             Thuê ngay
           </a>
@@ -581,7 +592,12 @@ export default function App() {
     }
   })
 
+  const [profileOpen, setProfileOpen] = useState(false)
+
   const handleLoginSuccess = (user) => {
+    setCurrentUser(user)
+  }
+  const handleUserChange = (user) => {
     setCurrentUser(user)
   }
 
@@ -595,6 +611,28 @@ export default function App() {
 
   const canvasRef = useRef(null)
   const heroImgRef = useRef(null)
+
+  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const vnpayStatus = params.get('vnpayStatus')
+    const amount = Number(params.get('amount') || 0)
+    const txnRef = params.get('txnRef') || ''
+
+    if (!vnpayStatus) {
+      return
+    }
+
+    const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
+
+    if (vnpayStatus === 'success' && amount > 0) {
+      toast.success(`Nạp ví thành công ${amount.toLocaleString('vi-VN')} VNĐ`)
+    } else {
+      toast.error('Thanh toán VNPay không thành công')
+    }
+
+    window.history.replaceState({}, document.title, window.location.pathname)
+  }, [])
 
   useEffect(() => {
     const root = document.documentElement
@@ -707,6 +745,7 @@ export default function App() {
         onOpenAuth={setAuthMode}
         currentUser={currentUser}
         onLogout={handleLogout}
+        onOpenProfile={() => setProfileOpen(true)}
       />
 
       <main id="top" className="relative z-0 w-full">
@@ -719,6 +758,16 @@ export default function App() {
       </main>
 
       <Footer />
+
+      <AiChatBox />
+
+      {profileOpen && currentUser && (
+        <UserProfileModal
+          user={currentUser}
+          onClose={() => setProfileOpen(false)}
+          onUserChange={handleUserChange}
+        />
+      )}
 
       {authMode && (
         <AuthModal

@@ -1,0 +1,51 @@
+﻿# Node / frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# Java / backend
+backend/target/
+backend/.env
+backend/.env.*
+!backend/.env.example
+
+# Secrets / config backups
+*.backup.java
+*.backup.jsx
+*.backup.yml
+*.backup.xml
+*.backup.txt
+*.old.*
+*.log
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local env / secrets
+.env
+.env.*
+*.env
+application.local.yml
+application.*.backup.yml
+*.backup.java
+*.backup.jsx
+*.backup.txt
+*.backup.xml
+
+# Backend build
+backend/target/
+
+# Frontend build
+frontend/node_modules/
+frontend/dist/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
