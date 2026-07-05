@@ -1,4 +1,4 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Bot, MessageCircle, Send, Sparkles, X } from 'lucide-react'
 import api from '../services/api'
 
@@ -104,7 +104,7 @@ export default function AiChatBox() {
 
               <div>
                 <h3 className="font-bold">{TEXT.title}</h3>
-                <p className="dim text-xs">{TEXT.subtitle}</p>
+                <p className="text-xs text-gray-300">{TEXT.subtitle}</p>
               </div>
             </div>
 
@@ -113,8 +113,8 @@ export default function AiChatBox() {
               onClick={() => setOpen(false)}
               className="grid h-9 w-9 place-items-center rounded-xl border"
               style={{ borderColor: 'var(--border)' }}
-            >
-              <X size={18} />
+            aria-label="close">
+              <X size={18} className="text-gray-300" />
             </button>
           </div>
 
@@ -127,8 +127,8 @@ export default function AiChatBox() {
                 <div
                   className={`max-w-[82%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                     message.role === 'user'
-                      ? 'gradient-btn text-[#0B0E11]'
-                      : 'border bg-white/5'
+                      ? 'bg-gradient-to-r from-green-400 to-cyan-400 text-gray-900 font-medium'
+                      : 'border bg-white/5 text-white'
                   }`}
                   style={message.role === 'bot' ? { borderColor: 'var(--border)' } : undefined}
                 >
@@ -146,7 +146,7 @@ export default function AiChatBox() {
             {loading && (
               <div className="flex justify-start">
                 <div
-                  className="max-w-[82%] rounded-2xl border bg-white/5 px-4 py-3 text-sm"
+                  className="max-w-[82%] rounded-2xl border bg-white/5 px-4 py-3 text-sm text-white"
                   style={{ borderColor: 'var(--border)' }}
                 >
                   VOLTA AI đang trả lời...
@@ -181,8 +181,8 @@ export default function AiChatBox() {
                   }
                 }}
                 placeholder={TEXT.placeholder}
-                className="flex-1 rounded-xl border bg-white/10 px-4 py-3 text-sm outline-none"
-                style={{ borderColor: 'var(--border)', color: 'var(--text)' }}
+                className="flex-1 rounded-xl border bg-white/10 px-4 py-3 text-sm outline-none text-white placeholder-gray-500"
+                style={{ borderColor: 'var(--border)' }}
               />
 
               <button

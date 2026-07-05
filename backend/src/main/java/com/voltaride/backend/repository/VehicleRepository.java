@@ -9,13 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface VehicleRepository extends JpaRepository<Vehicle, Long> {
+
     Page<Vehicle> findByStatus(VehicleStatus status, Pageable pageable);
 
     @Query("SELECT v FROM Vehicle v WHERE " +
            "(:status IS NULL OR v.status = :status) AND " +
            "(:categoryId IS NULL OR v.category.id = :categoryId) AND " +
-           "(:search IS NULL OR LOWER(v.name) LIKE LOWER(CONCAT('%', :search, '%')) " +
-           "OR LOWER(v.brand) LIKE LOWER(CONCAT('%', :search, '%')))")
+           "(:search IS NULL OR LOWER(CAST(v.name AS string)) LIKE LOWER(CAST(CONCAT('%', :search, '%') AS string)) " +
+           "OR LOWER(CAST(v.brand AS string)) LIKE LOWER(CAST(CONCAT('%', :search, '%') AS string)))")
     Page<Vehicle> findWithFilters(
         @Param("status") VehicleStatus status,
         @Param("categoryId") Long categoryId,

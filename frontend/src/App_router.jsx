@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import {
   BatteryCharging,
@@ -12,7 +12,6 @@ import {
 } from 'lucide-react'
 
 import AuthModal from './components/AuthModal.jsx'
-import UserProfileModal from './components/UserProfileModal.jsx'
 
 const navItems = [
   { label: 'Trang chủ', href: '#top' },
@@ -94,7 +93,7 @@ const stats = [
   { num: '40+', label: 'điểm đổi pin' }
 ]
 
-function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout, onOpenProfile }) {
+function Header({ isDark, onToggleTheme, onOpenAuth }) {
   return (
     <header
       className="sticky top-0 z-40 w-full border-b backdrop-blur-md"
@@ -110,7 +109,7 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout, onOp
 
         <nav aria-label="Điều hướng chính" className="hidden items-center gap-7 lg:flex">
           {navItems.map((item) => (
-            <a key={item.href} href={item.href} className="whitespace-nowrap text-sm hover:opacity-70">
+            <a key={item.href} href={item.href} className="text-sm hover:opacity-70">
               {item.label}
             </a>
           ))}
@@ -126,57 +125,27 @@ function Header({ isDark, onToggleTheme, onOpenAuth, currentUser, onLogout, onOp
           >
             {isDark ? <Moon size={18} /> : <Sun size={18} />}
           </button>
-          {currentUser ? (
-            <div className="hidden items-center gap-3 sm:flex">
-              <span className="whitespace-nowrap text-sm font-semibold">
-                Xin chào,{' '}
-                <span className="accent-grad">
-                  {currentUser.fullName || currentUser.name || currentUser.email}
-                </span>
-              </span>
 
-              <button
-                type="button"
-                onClick={onOpenProfile}
-                className="whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-semibold"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                Trang cá nhân
-              </button>
+          <button
+            type="button"
+            onClick={() => onOpenAuth('login')}
+            className="hidden rounded-xl border px-4 py-2 text-sm font-semibold sm:inline-flex"
+            style={{ borderColor: 'var(--border)' }}
+          >
+            Đăng nhập
+          </button>
 
-              <button
-                type="button"
-                onClick={onLogout}
-                className="whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-semibold"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                Đăng xuất
-              </button>
-            </div>
-          ) : (
-            <>
-              <button
-                type="button"
-                onClick={() => onOpenAuth('login')}
-                className="hidden whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-semibold sm:inline-flex"
-                style={{ borderColor: 'var(--border)' }}
-              >
-                Đăng nhập
-              </button>
-
-              <button
-                type="button"
-                onClick={() => onOpenAuth('register')}
-                className="cta-shine hidden whitespace-nowrap rounded-xl px-4 py-2 text-sm font-semibold gradient-btn sm:inline-flex"
-              >
-                Đăng ký
-              </button>
-            </>
-          )}
+          <button
+            type="button"
+            onClick={() => onOpenAuth('register')}
+            className="cta-shine hidden rounded-xl px-4 py-2 text-sm font-semibold gradient-btn sm:inline-flex"
+          >
+            Đăng ký
+          </button>
 
           <a
-            href="/vehicles"
-            className="cta-shine hidden items-center gap-2 whitespace-nowrap rounded-xl px-5 py-2.5 text-sm font-semibold gradient-btn lg:inline-flex"
+            href="#pricing"
+            className="cta-shine hidden items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold gradient-btn lg:inline-flex"
           >
             Thuê ngay
           </a>
@@ -210,14 +179,14 @@ function Hero({ heroImgRef }) {
 
           <div className="flex flex-wrap gap-3">
             <a
-              href="/vehicles"
+              href="#pricing"
               className="cta-shine pulse inline-flex items-center gap-2 rounded-xl px-6 py-3 font-semibold gradient-btn"
             >
               Xem bảng giá
             </a>
 
             <a
-              href="/vehicles"
+              href="#vehicles"
               className="inline-flex items-center gap-2 rounded-xl border px-6 py-3 font-semibold"
               style={{ borderColor: 'var(--border)' }}
             >
@@ -290,7 +259,7 @@ function VehiclesSection() {
                 <div className="flex items-center justify-between">
                   <span className="mono font-bold">{vehicle.price}</span>
 
-                  <a href="/vehicles" className="rounded-lg px-4 py-2 text-sm font-semibold gradient-btn">
+                  <a href="#pricing" className="rounded-lg px-4 py-2 text-sm font-semibold gradient-btn">
                     Đặt xe
                   </a>
                 </div>
@@ -583,83 +552,9 @@ function Footer() {
 export default function App() {
   const [isDark, setIsDark] = useState(true)
   const [authMode, setAuthMode] = useState(null)
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('user') || 'null')
-    } catch {
-      return null
-    }
-  })
-
-  const [profileOpen, setProfileOpen] = useState(false)
-
-  const handleLoginSuccess = (user) => {
-    setCurrentUser(user)
-  }
-  const handleUserChange = (user) => {
-    setCurrentUser(user)
-  }
-
-  const handleLogout = () => {
-    localStorage.removeItem('user')
-    localStorage.removeItem('accessToken')
-    localStorage.removeItem('refreshToken')
-    setCurrentUser(null)
-    toast.success('Đã đăng xuất')
-  }
 
   const canvasRef = useRef(null)
   const heroImgRef = useRef(null)
-
-  
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const vnpayStatus = params.get('vnpayStatus')
-    const amount = Number(params.get('amount') || 0)
-    const txnRef = params.get('txnRef') || ''
-
-    if (!vnpayStatus) {
-      return
-    }
-
-    const savedUser = JSON.parse(localStorage.getItem('user') || 'null')
-
-    if (vnpayStatus === 'success' && savedUser && amount > 0) {
-      const nextBalance = Number(savedUser.walletBalance || 0) + amount
-
-      const updatedUser = {
-        ...savedUser,
-        walletBalance: nextBalance
-      }
-
-      localStorage.setItem('user', JSON.stringify(updatedUser))
-      setCurrentUser(updatedUser)
-
-      const key = `wallet_transactions_${savedUser.email || 'guest'}`
-      const currentTransactions = JSON.parse(localStorage.getItem(key) || '[]')
-
-      const existed = currentTransactions.some((item) => item.txnRef === txnRef)
-
-      if (!existed) {
-        const newTransaction = {
-          id: Date.now(),
-          txnRef,
-          type: 'VNPAY',
-          amount,
-          status: 'SUCCESS',
-          createdAt: new Date().toISOString()
-        }
-
-        localStorage.setItem(key, JSON.stringify([newTransaction, ...currentTransactions]))
-      }
-
-      toast.success(`Nạp ví thành công ${amount.toLocaleString('vi-VN')} VNĐ`)
-    } else {
-      toast.error('Thanh toán VNPay không thành công')
-    }
-
-    window.history.replaceState({}, document.title, window.location.pathname)
-  }, [])
 
   useEffect(() => {
     const root = document.documentElement
@@ -770,9 +665,6 @@ export default function App() {
         isDark={isDark}
         onToggleTheme={() => setIsDark((current) => !current)}
         onOpenAuth={setAuthMode}
-        currentUser={currentUser}
-        onLogout={handleLogout}
-        onOpenProfile={() => setProfileOpen(true)}
       />
 
       <main id="top" className="relative z-0 w-full">
@@ -786,20 +678,11 @@ export default function App() {
 
       <Footer />
 
-      {profileOpen && currentUser && (
-        <UserProfileModal
-          user={currentUser}
-          onClose={() => setProfileOpen(false)}
-          onUserChange={handleUserChange}
-        />
-      )}
-
       {authMode && (
         <AuthModal
           mode={authMode}
           onClose={() => setAuthMode(null)}
           onSwitchMode={setAuthMode}
-          onLoginSuccess={handleLoginSuccess}
         />
       )}
     </div>
