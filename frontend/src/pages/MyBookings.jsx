@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, Clock, XCircle, CreditCard, Wallet } from 'lucide-react';
+import { Calendar, Clock, XCircle, Wallet, Star } from 'lucide-react';
+import { reviewService } from '../services/reviewService';
 import toast from 'react-hot-toast';
 import { bookingService } from '../services/bookingService';
 import { formatPrice } from '../utils/formatPrice';
@@ -16,10 +17,19 @@ const statusMap = {
 };
 
 export default function MyBookings() {
-  const { user, isAuthenticated } = useAuthStore();
+  const storeAuth = useAuthStore();
+  const lsUser = JSON.parse(localStorage.getItem('user') || 'null');
+  const lsToken = localStorage.getItem('accessToken');
+  const rawUser = storeAuth.user || lsUser;
+  const user = rawUser ? { ...rawUser, id: rawUser.id || rawUser.userId } : null;
+  const isAuthenticated = storeAuth.isAuthenticated || !!lsUser;
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [walletBalance, setWalletBalance] = useState(0);
+  const [reviewModal, setReviewModal] = useState(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewedIds, setReviewedIds] = useState([]);
 
   const fetchBookings = () => {
     if (!user) return;
@@ -37,7 +47,21 @@ export default function MyBookings() {
       .catch(() => {});
   };
 
-  useEffect(() => { fetchBookings(); fetchWallet(); }, [user]);
+  useEffect(() => { fetchBookings(); fetchWallet(); }, [user?.id]);
+
+  const handleReview = async () => {
+    if (!reviewModal) return;
+    try {
+      await reviewService.create({ bookingId: reviewModal.id, rating: reviewRating, comment: reviewComment });
+      toast.success('Cảm ơn bạn đã đánh giá!');
+      setReviewedIds(prev => [...prev, reviewModal.id]);
+      setReviewModal(null);
+      setReviewRating(5);
+      setReviewComment('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Đánh giá thất bại');
+    }
+  };
 
   const handleCancel = async (id) => {
     if (!confirm('Bạn có chắc muốn hủy đơn này?')) return;
@@ -130,6 +154,12 @@ export default function MyBookings() {
                 </div>
                 <div className="flex flex-col items-end justify-between gap-2">
                   <span className="font-mono font-bold text-cyan-400 text-lg">{formatPrice(b.totalPrice)}</span>
+                  {(b.status === 'PAID' || b.status === 'RETURNED') && !reviewedIds.includes(b.id) && (
+                    <button onClick={() => setReviewModal(b)}
+                      className="flex items-center gap-1.5 text-sm font-semibold px-4 py-2 rounded-lg bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition">
+                      <Star size={16} /> Đánh giá
+                    </button>
+                  )}
                   {b.status === 'PENDING_PAYMENT' && (
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -150,6 +180,35 @@ export default function MyBookings() {
               </div>
             );
           })}
+        </div>
+      )}
+      {reviewModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+          <div className="w-full max-w-md p-6 rounded-2xl bg-gray-900 border border-cyan-500/20">
+            <h3 className="text-lg font-bold mb-1">Đánh giá xe</h3>
+            <p className="text-sm text-gray-400 mb-4">{reviewModal.vehicleName} - Đơn #{reviewModal.id}</p>
+            <div className="flex gap-2 mb-4">
+              {[1,2,3,4,5].map(s => (
+                <button key={s} onClick={() => setReviewRating(s)}
+                  className={s <= reviewRating ? 'text-yellow-400' : 'text-gray-600'}>
+                  <Star size={28} fill={s <= reviewRating ? '#facc15' : 'none'} />
+                </button>
+              ))}
+            </div>
+            <textarea value={reviewComment} onChange={e => setReviewComment(e.target.value)}
+              placeholder="Nhận xét của bạn..." rows={3}
+              className="w-full rounded-xl bg-white/[0.06] border border-cyan-500/20 px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-cyan-400 mb-4" />
+            <div className="flex gap-3">
+              <button onClick={handleReview}
+                className="flex-1 py-2.5 rounded-xl font-semibold bg-gradient-to-r from-green-400 to-cyan-400 text-gray-900">
+                Gửi đánh giá
+              </button>
+              <button onClick={() => setReviewModal(null)}
+                className="flex-1 py-2.5 rounded-xl font-semibold border border-gray-700 text-gray-400 hover:text-white">
+                Hủy
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

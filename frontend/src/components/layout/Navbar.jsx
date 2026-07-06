@@ -5,7 +5,12 @@ import useAuthStore from '../../store/authStore';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const storeAuth = useAuthStore();
+  const lsUser = JSON.parse(localStorage.getItem('user') || 'null');
+  const lsToken = localStorage.getItem('accessToken');
+  const user = storeAuth.user || lsUser;
+  const isAuthenticated = storeAuth.isAuthenticated || !!lsUser;
+  const logout = () => { storeAuth.logout(); window.location.href = '/'; };
   const { pathname } = useLocation();
 
   const links = [

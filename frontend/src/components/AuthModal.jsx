@@ -1,6 +1,7 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import toast from 'react-hot-toast'
 import api from '../services/api'
+import useAuthStore from '../store/authStore'
 
 export default function AuthModal({ mode, onClose, onSwitchMode, onLoginSuccess }) {
   const [fullName, setFullName] = useState('')
@@ -9,6 +10,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode, onLoginSuccess 
   const [otp, setOtp] = useState('')
   const [step, setStep] = useState('form')
   const [loading, setLoading] = useState(false)
+  const setAuth = useAuthStore.getState().setAuth
 
   const isRegister = mode === 'register'
 
@@ -52,10 +54,11 @@ export default function AuthModal({ mode, onClose, onSwitchMode, onLoginSuccess 
           password: password.trim()
         })
 
-        const responseData = res.data || {}
+        const rawRes = res.data || {}
+        const responseData = rawRes.data || rawRes
 
         const userData = responseData.user || {
-          id: responseData.id,
+          id: responseData.id || responseData.userId,
           fullName: responseData.fullName,
           name: responseData.name,
           email: responseData.email,
@@ -76,6 +79,7 @@ export default function AuthModal({ mode, onClose, onSwitchMode, onLoginSuccess 
         }
 
         localStorage.setItem('user', JSON.stringify(savedUser))
+        setAuth(savedUser, responseData.accessToken || '')
 
         toast.success('Đăng nhập thành công')
 

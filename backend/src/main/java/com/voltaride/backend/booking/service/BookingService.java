@@ -10,6 +10,7 @@ import com.voltaride.backend.entity.Vehicle;
 import com.voltaride.backend.enums.VehicleStatus;
 import com.voltaride.backend.repository.UserRepository;
 import com.voltaride.backend.repository.VehicleRepository;
+import com.voltaride.backend.service.EmailService;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,13 +28,15 @@ public class BookingService {
     private final VehicleRepository vehicleRepo;
     private final UserRepository userRepo;
     private final JdbcTemplate jdbcTemplate;
+    private final EmailService emailService;
 
     public BookingService(BookingRepository bookingRepo, VehicleRepository vehicleRepo,
-                          UserRepository userRepo, JdbcTemplate jdbcTemplate) {
+                          UserRepository userRepo, JdbcTemplate jdbcTemplate, EmailService emailService) {
         this.bookingRepo = bookingRepo;
         this.vehicleRepo = vehicleRepo;
         this.userRepo = userRepo;
         this.jdbcTemplate = jdbcTemplate;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -80,6 +83,11 @@ public class BookingService {
         booking.setStatus(BookingStatus.PENDING_PAYMENT);
 
         booking = bookingRepo.save(booking);
+
+        emailService.sendBookingConfirmation(
+            user.getEmail(), user.getFullName(), vehicle.getName(),
+            start.toString(), end.toString(), "", price);
+
         return toResponse(booking);
     }
 
@@ -111,6 +119,11 @@ public class BookingService {
 
         booking.setStatus(BookingStatus.PAID);
         booking = bookingRepo.save(booking);
+
+        emailService.sendPaymentSuccess(
+            email, booking.getUser().getFullName(), booking.getVehicle().getName(),
+            booking.getStartTime().toString(), booking.getEndTime().toString(), booking.getTotalPrice());
+
         return toResponse(booking);
     }
 

@@ -19,7 +19,12 @@ const pickupLocations = [
 export default function VehicleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, isAuthenticated } = useAuthStore();
+  const storeAuth = useAuthStore();
+  const lsUser = JSON.parse(localStorage.getItem('user') || 'null');
+  const lsToken = localStorage.getItem('accessToken');
+  const rawUser = storeAuth.user || lsUser;
+  const user = rawUser ? { ...rawUser, id: rawUser.id || rawUser.userId } : null;
+  const isAuthenticated = storeAuth.isAuthenticated || !!lsUser;
   const [vehicle, setVehicle] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);

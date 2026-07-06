@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Car, Users, ShoppingCart, DollarSign, TrendingUp, Clock, Download, FileText } from 'lucide-react';
+import { Car, Users, ShoppingCart, DollarSign, TrendingUp, Clock, Download, FileText, Star } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, CartesianGrid } from 'recharts';
 import api from '../../services/api';
 import { formatPrice } from '../../utils/formatPrice';
@@ -19,6 +19,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [reportPeriod, setReportPeriod] = useState('month');
   const [reportData, setReportData] = useState(null);
+  const [reviews, setReviews] = useState([]);
 
   useEffect(() => {
     api.get('/admin/stats').then(r => setStats(r.data.data)).catch(()=>{}).finally(()=>setLoading(false));
@@ -30,6 +31,13 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => { fetchReport('month'); }, []);
+  useEffect(() => { api.get('/admin/reviews').then(r => setReviews(r.data.data || [])).catch(()=>{}); }, []);
+
+  const deleteReview = async (id) => {
+    if (!confirm('Xóa đánh giá này?')) return;
+    await api.delete('/admin/reviews/' + id);
+    setReviews(prev => prev.filter(r => r.id !== id));
+  };
 
   const exportExcel = () => {
     if (!reportData?.bookings?.length) return;
@@ -246,6 +254,34 @@ export default function AdminDashboard() {
             </div>
           ) : <p className="text-gray-500 text-sm">Chưa có đơn nào</p>}
         </div>
+      </div>
+      <div className="rounded-2xl border border-cyan-500/20 bg-white/[0.04] p-6 mt-6">
+        <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
+          <Star size={20} className="text-yellow-400"/> Đánh giá từ khách hàng ({reviews.length})
+        </h2>
+        {reviews.length > 0 ? (
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {reviews.map(r => (
+              <div key={r.id} className="flex items-start justify-between py-3 border-b border-gray-800 last:border-0">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-semibold text-sm">{r.userName}</span>
+                    <span className="text-gray-500 text-xs">→ {r.vehicleName}</span>
+                    <span className="text-gray-600 text-xs">Đơn #{r.bookingId}</span>
+                  </div>
+                  <div className="flex gap-0.5 mb-1">
+                    {[1,2,3,4,5].map(s => (
+                      <span key={s} className={s <= r.rating ? 'text-yellow-400' : 'text-gray-700'}>★</span>
+                    ))}
+                  </div>
+                  {r.comment && <p className="text-sm text-gray-300">{r.comment}</p>}
+                  <span className="text-xs text-gray-600">{new Date(r.createdAt).toLocaleString('vi-VN')}</span>
+                </div>
+                <button onClick={() => deleteReview(r.id)} className="text-red-400 hover:text-red-300 text-xs px-2 py-1">Xóa</button>
+              </div>
+            ))}
+          </div>
+        ) : <p className="text-gray-500 text-sm">Chưa có đánh giá nào</p>}
       </div>
     </div>
   );
